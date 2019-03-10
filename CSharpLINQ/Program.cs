@@ -10,12 +10,49 @@ namespace CSharpLINQ
     {
         static void Main(string[] args)
         {
-            // The code provided will print ‘Hello World’ to the console.
-            // Press Ctrl+F5 (or go to Debug > Start Without Debugging) to run your app.
-            Console.WriteLine("Hello World!");
-            Console.ReadKey();
+            //BirdRepository birdRepo = new BirdRepository();
+            List<Bird> birds = new BirdRepository().birdRepo;
 
-            // Go to http://aka.ms/dotnet-get-started-console to continue learning how to build a console app! 
+            Console.WriteLine("List of birds:");
+            //foreach (Bird bird in birdRepo.birds)
+            foreach (Bird bird in birds)
+            {
+                Console.WriteLine(bird.Name);
+            }
+
+            /*  *****   Quantifiers *****   */
+
+            // Any
+            var crowsExist = birds.Any(bird => bird.Name == "Crow");
+            Console.WriteLine();
+            Console.WriteLine("Crows in list: " + crowsExist);
+
+            if (!birds.Any(bird => bird.Name == "Crow"))
+            {
+                birds.Add(new Bird { Name = "Crow", Color = "Black", Sightings = 11 });
+            }
+            Console.WriteLine("Birds in list: " + birds.Any());
+
+            // Contains
+            var sparrow = new Bird { Name = "Sparrow", Color = "Brown" };
+            if ( !birds.Contains(sparrow))
+            {
+                birds.Add(sparrow);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("List of birds:");
+            foreach (Bird bird in birds)
+            {
+                Console.WriteLine(bird.Name);
+            }
+
+            // All
+            var sparrowsExist = birds.All(bird => bird.Name != "Sparrow");
+            Console.WriteLine();
+            Console.WriteLine("Sparrows in list: " + sparrowsExist);
+
+            Console.ReadKey();
         }
     }
 }

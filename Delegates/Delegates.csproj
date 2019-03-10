@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7017FEB6-EA26-48F3-AE9D-93BCE67756AB}</ProjectGuid>
+    <ProjectGuid>{7A84BEF7-3445-456E-8964-A3FA8931B70D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>CSharpLINQ</RootNamespace>
-    <AssemblyName>CSharpLINQ</AssemblyName>
+    <RootNamespace>Delegates</RootNamespace>
+    <AssemblyName>Delegates</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -42,11 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bird.cs" />
-    <Compile Include="BirdRepository.cs" />
-    <Compile Include="scrap\Program3.cs" />
-    <Compile Include="scrap\Program2.cs" />
-    <Compile Include="scrap\Program1.cs" />
+    <Compile Include="Program_Func.cs" />
+    <Compile Include="Program_Actions.cs" />
+    <Compile Include="Program_Delegates.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
