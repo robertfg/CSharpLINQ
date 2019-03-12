@@ -42,12 +42,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddAny.cs" />
     <Compile Include="Bird.cs" />
     <Compile Include="BirdRepository.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="FuncActionLambda.cs" />
+    <Compile Include="Join.cs" />
     <Compile Include="NumberAnalysis.cs" />
     <Compile Include="NumberAnalysis2.cs" />
+    <Compile Include="Partitioning.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
