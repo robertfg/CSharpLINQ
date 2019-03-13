@@ -8,7 +8,7 @@ namespace CodeChallenges
 {
     class Join
     {
-        public void Join()
+        public void Joins()
         {
             var myBirds = new List<Bird>
             {
@@ -28,6 +28,10 @@ namespace CodeChallenges
                 myBird => myBird.Name,
                 yourBird => yourBird.Name,
                 (myBird, yourBird) => myBird);
+
+            var sumOfSightings = ourBirds.Sum(bird => bird.Sightings);
+
+            var averageSightings = ourBirds.Average(bird => bird.Sightings);
         }
     }
 }

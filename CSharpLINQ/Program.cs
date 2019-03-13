@@ -232,7 +232,7 @@ namespace CSharpLINQ
                 Console.WriteLine(bird);
             }
 
-            // ???
+            // Group birds variation
             var gb2 = groupBirds
                 //.Where(grp => grp.Color == "Red")
                 .Where(grp => grp.Color == "Purple")
@@ -254,7 +254,190 @@ namespace CSharpLINQ
             {
                 Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
             }
-            
+
+            /*  *****   Aggregates  *****   */
+
+            // Count - I don't need "grp"; it could be just "bird"
+            var birdCount = birds
+                .GroupBy(bird => bird.Color)
+                .Select(grp => new { Color = grp.Key, Count = grp.Count() });
+
+            Console.WriteLine();
+            Console.WriteLine("Aggregates");
+            Console.WriteLine("Count:");
+            foreach (var bird in birdCount)
+            {
+                Console.WriteLine(bird.Color + ": " + bird.Count);
+            }
+
+            // Sum
+            var birdSum = birds.Sum(bird => bird.Sightings);
+            Console.WriteLine();
+            Console.WriteLine("Sum: " + birdSum);
+
+            var birdSightings = birds
+                .GroupBy(bird => bird.Color)
+                .Select(grp => new { Color = grp.Key, Count = grp.Sum(bird => bird.Sightings) });
+
+            Console.WriteLine();
+            Console.WriteLine("Sum of sightings:");
+            foreach (var bird in birdSightings)
+            {
+                Console.WriteLine(bird.Color + ": " + bird.Count);
+            }
+
+            // Average
+            var birdAverage = birds.Average(bird => bird.Sightings);
+            Console.WriteLine();
+            Console.WriteLine("Average: " + birdAverage);
+
+            // Min
+            var birdMin = birds.Min(bird => bird.Sightings);
+            Console.WriteLine();
+            Console.WriteLine("Minimum: " + birdMin);
+
+            // Max
+            var birdMax = birds.Max(bird => bird.Sightings);
+            Console.WriteLine();
+            Console.WriteLine("Maximum: " + birdMax);
+
+            /*  *****   Set Operations  *****   */
+
+            // Distinct
+            var distinctBirds = birds.Select(bird => bird.Color).Distinct();
+            Console.WriteLine();
+            Console.WriteLine("Set Operations");
+            Console.WriteLine("Distinct:");
+            foreach (var bird in distinctBirds)
+            {
+                Console.WriteLine(bird);
+            }
+
+            // Except
+            var exceptColors = colors
+                .Except(birds.Select(bird => bird.Color).Distinct());
+            Console.WriteLine();
+            Console.Write("Except:  ");
+            foreach (var bird in exceptColors)
+            {
+                Console.Write(bird + ", ");
+            }
+
+            // Except
+            var unionColors = colors
+                .Union(birds.Select(bird => bird.Color).Distinct());
+            Console.WriteLine();
+            Console.Write("Union:  ");
+            foreach (var bird in unionColors)
+            {
+                Console.Write(bird + ", ");
+            }
+
+            // Intersect
+            var intColors = colors
+                .Intersect(birds.Select(bird => bird.Color).Distinct());
+            Console.WriteLine();
+            Console.Write("Intersect:  ");
+            foreach (var bird in intColors)
+            {
+                Console.Write(bird + ", ");
+            }
+
+            // Concat
+            var concatColors = colors
+                .Concat(birds.Select(bird => bird.Color));
+            Console.WriteLine();
+            Console.Write("Concat:  ");
+            foreach (var bird in concatColors)
+            {
+                Console.Write(bird + ", ");
+            }
+
+            // Same as union
+            unionColors = colors
+                .Concat(birds.Select(bird => bird.Color)).Distinct();
+            Console.WriteLine();
+            Console.Write("Union using Concat:  ");
+            foreach (var bird in unionColors)
+            {
+                Console.Write(bird + ", ");
+            }
+
+            /*  *****   Generation Operations  *****   */
+
+            Console.WriteLine("\n\n");
+            Console.WriteLine("Generation Operations");
+
+            // Range
+            IEnumerable<int> rangeNum = Enumerable.Range(10, 10);
+            Console.Write("Range:  ");
+            foreach (var rNum in rangeNum)
+            {
+                Console.Write(rNum + ", ");
+            }
+
+            // Repeat
+            var repeatNum = Enumerable.Repeat("LINQ is awesome!", 10);
+            Console.WriteLine();
+            Console.Write("Repeat:  ");
+            foreach (var rNum in repeatNum)
+            {
+                Console.Write(rNum + ", ");
+            }
+
+            var blankBirds = Enumerable.Repeat(new Bird { }, 5);
+            Console.WriteLine();
+            Console.Write("Repeat:  ");
+            foreach (var bird in blankBirds)
+            {
+                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
+            }
+
+            // Empty
+            var emptyBirds = Enumerable.Empty<Bird>();
+            Console.WriteLine();
+            Console.Write("Empty:  ");
+            foreach (var bird in emptyBirds)
+            {
+                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
+            }
+
+            // DefaultIfEmpty
+
+            var emptyNum = Enumerable.Empty<int>();
+            Console.WriteLine();
+            Console.Write("DefaultIfEmpty:  ");
+            Console.Write(emptyNum.Count() + "  |  ");    // Count = 0
+            // Doesn't work:
+            //Console.Write(emptyNum.ElementAt(0) + "  |  ");
+            Console.Write(emptyNum + "  |  ");
+            Console.Write(emptyNum.DefaultIfEmpty() + "  |  ");
+
+            int[] array = emptyNum.ToArray();
+            Console.WriteLine(array.Length);        // 0
+
+            /*  *****   Conversion Operations  *****   */
+
+            Console.WriteLine();
+            Console.WriteLine("Conversion Operations");
+
+            // ToList
+            Console.WriteLine();
+            Console.WriteLine("ToList:  ");
+
+            var tolBirds = birds
+                .Where(bird => bird.Color == "Red")
+                .ToList();
+
+            foreach (var bird in tolBirds)
+            {
+                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
+            }
+
+            // Last example:
+            numbers = new List<int> { 2, 4, 8, 16, 34 };
+            numbers.Where(n => n > 10);
+
             Console.ReadKey();
         }
     }
