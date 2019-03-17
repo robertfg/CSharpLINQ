@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,433 +11,239 @@ namespace CSharpLINQ
     {
         static void Main(string[] args)
         {
-            //BirdRepository birdRepo = new BirdRepository();
-            List<Bird> birds = new BirdRepository().birdRepo;
+            List<Bird> birds = BirdRepository.LoadBirds();
 
-            Console.WriteLine("List of birds:");
-            //foreach (Bird bird in birdRepo.birds)
-            foreach (Bird bird in birds)
-            {
-                Console.WriteLine(bird.Name);
-            }
-
-            /*  *****   Quantifiers *****   */
-
-            // Any
-            var crowsExist = birds.Any(bird => bird.Name == "Crow");
-            Console.WriteLine();
-            Console.WriteLine("Crows in list: " + crowsExist);
-
-            if (!birds.Any(bird => bird.Name == "Crow"))
-            {
-                birds.Add(new Bird { Name = "Crow", Color = "Black", Sightings = 11 });
-            }
-            Console.WriteLine("Birds in list: " + birds.Any());
-
-            // Contains
-            var sparrow = new Bird { Name = "Sparrow", Color = "Brown" };
-            if ( !birds.Contains(sparrow))
-            {
-                birds.Add(sparrow);
-            }
-
-            Console.WriteLine();
             Console.WriteLine("List of birds:");
             foreach (Bird bird in birds)
             {
-                Console.WriteLine(bird.Name);
+                Console.WriteLine(bird.CommonName);
             }
 
-            // All
-            var sparrowsExist = birds.All(bird => bird.Name != "Sparrow");
+            /*  **********  How much data do we have?   **********  */
+
+            // Number of birds
             Console.WriteLine();
-            Console.WriteLine("Sparrows in list: " + !sparrowsExist);
+            Console.WriteLine("Total birds: " + birds.Count());
 
-            /*  *****   Elements    *****   */
-
-            // Single
-            var element = birds.Where(bird => bird.Name == "Crow").Single();
+            // Number of sightings of all birds
             Console.WriteLine();
-            Console.WriteLine("Element: " + element.Name);
+            Console.WriteLine("Total sightings: " + birds.SelectMany(bird => bird.Sightings).Count());
 
-            element = birds.Single(bird => bird.Name == "Crow");
-            Console.WriteLine("Element: " + element.Name);
+            // Average number of sightings of birds
+            Console.WriteLine();
+            Console.WriteLine("Average sightings: " + birds.Select(bird => bird.Sightings.Count()).Average());
 
-            element = birds.SingleOrDefault(bird => bird.Name == "Eagle");
-
-            // Default for strings is null
-            if ( element == null)
+            // List of countries:
+            var countries = birds.SelectMany(bird => bird.Sightings).Select(sighting => sighting.Place.Country);
+            Console.WriteLine();
+            Console.WriteLine("Countries:");
+            foreach(var country in countries)
             {
-                Console.WriteLine("Element does not exist.");
+                Console.Write(country + ", ");
             }
-            else
+
+            // Distinct list of countries:
+            countries = birds.SelectMany(bird => bird.Sightings).Select(sighting => sighting.Place.Country).Distinct();
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("Distinct Countries:");
+            foreach (var country in countries)
             {
-                Console.WriteLine("Element: " + element.Name);
+                Console.Write(country + ", ");
             }
 
-            // Default for integers is 0
-            var numbers = new List<int> { 2, 4, 8, 26 };
-            //var num = numbers.SingleOrDefault(n => n == 26);
-            var num = numbers.SingleOrDefault(n => n == 99);
-
-            if (num == 0)
+            // Group
+            var grpSightings = birds
+                .SelectMany(bird => bird.Sightings)
+                .GroupBy(sighting => sighting.Place.Country)
+                .Select(grp => new { Country = grp.Key, Sightings = grp.Count() });
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("Group:");
+            foreach (var grpSighting in grpSightings)
             {
-                Console.WriteLine("Number does not exist.");
+                Console.Write(grpSighting.Country + ": " + grpSighting.Sightings + ", ");
             }
-            else
+
+            /*  **********  Sightings of Endangered Birds   **********  */
+
+            // Conservation statuses
+            var statuses = birds
+                .Select(bird => bird.ConservationStatus)
+                .Distinct();
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("Conservation statuses:");
+            foreach (var status in statuses)
             {
-                Console.WriteLine("Number: " + num);
+                Console.Write(status + ", ");
             }
 
-            // ERROR: more than one bird in list
-            //element = birds.Single();
-
-            // First
-            element = birds.First();
-            Console.WriteLine("First Element: " + element.Name);
-
-            // Last
-            element = birds.Last();
-            Console.WriteLine("Last Element: " + element.Name);
-
-            // Last
-            element = birds.ElementAt(2);
-            Console.WriteLine("Element 2: " + element.Name);
-
-            /*  *****   Elements    *****   */
-
-            // Take
-            //var subset = birds.Take(3);
-            var subset = birds
-                .OrderBy(bird => bird.Name)
-                .Take(3);
-
+            statuses = statuses
+                .Where(bird => bird != "LeastConcern" &&  bird != "NearThreatened");
             Console.WriteLine();
-            Console.WriteLine("Take:");
-            foreach (Bird bird in subset)
+            Console.WriteLine();
+            Console.WriteLine("Our conservation statuses:");
+            foreach (var status in statuses)
             {
-                Console.WriteLine(bird.Name);
+                Console.Write(status + ", ");
             }
 
-            // Skip
-            subset = birds
-                .OrderBy(bird => bird.Name)
-                .Skip(3)
-                .Take(3);
-
+            // Endangered sightings
+            var endangeredBirds = birds
+                .Join(statuses,
+                bird => bird.ConservationStatus,
+                status => status,
+                (bird, status) => new { Status = status, Birds = bird});
             Console.WriteLine();
-            Console.WriteLine("Skip:");
-            foreach (Bird bird in subset)
+            Console.WriteLine();
+            Console.WriteLine("Endangered birds:");
+            foreach (var endBird in endangeredBirds)
             {
-                Console.WriteLine(bird.Name);
+                Console.WriteLine(endBird.Status + ": " + endBird.Birds.CommonName);
             }
 
-            // TakeWhile
-            subset = birds
-                // This produces no results:
-                //.OrderBy(bird => bird.Name)
-                .OrderBy(bird => bird.Name.Length)
-                .TakeWhile(bird => bird.Name.Length < 6);
-
+            var endangeredSightings = birds.Join(
+                statuses,
+                bird => bird.ConservationStatus,
+                status => status,
+                (bird, status) => new { Status = status, Sightings = bird.Sightings })
+                .GroupBy(bird => bird.Status)
+                .Select(bird => new { Status = bird.Key, Sightings = bird.Sum(status => status.Sightings.Count()) });
             Console.WriteLine();
-            Console.WriteLine("TakeWhile:");
-            foreach (Bird bird in subset)
+            Console.WriteLine();
+            Console.WriteLine("Endangered sightings:");
+            foreach (var endSi in endangeredSightings)
             {
-                Console.WriteLine(bird.Name);
+                Console.Write(endSi.Status + ": " + endSi.Sightings + ", ");
             }
 
-            // SkipWhile
-            subset = birds
-                .OrderBy(bird => bird.Name.Length)
-                .SkipWhile(bird => bird.Name.Length < 6);
+            /*  **********  Bird Importing  **********  */
+
+            // Import birds
+            var importedBirds = BirdRepository.LoadImportedBirds();
 
             Console.WriteLine();
-            Console.WriteLine("SkipWhile:");
-            foreach (Bird bird in subset)
+            Console.WriteLine();
+            Console.WriteLine("List of imported birds:");
+            foreach (Bird bird in importedBirds)
             {
-                Console.WriteLine(bird.Name);
+                Console.WriteLine(bird.CommonName);
             }
 
-            /*  *****   Joins   *****   */
-
-            // Join Query Syntax
-            var colors = new List<string> { "Red", "Blue", "Purple" };
-
-            var favoriteBirds =
-                from bird in birds
-                join color in colors
-                on bird.Color equals color
-                select bird;
+            // Get common birds (INNER JOIN)
+            var newBirds = importedBirds
+                .Join(birds,
+                ib => ib.CommonName,
+                b => b.CommonName,
+                (ib, b) => new { ImportedBirds = ib, Birds = b });
 
             Console.WriteLine();
-            Console.WriteLine("Join query syntax:");
-            foreach (Bird bird in favoriteBirds)
+            Console.WriteLine();
+            Console.WriteLine("List of duplicate birds:");
+            foreach (var bird in newBirds)
             {
-                Console.WriteLine(bird.Name + " " + bird.Color);
+                Console.WriteLine(bird.ImportedBirds.CommonName + ", " + bird.Birds.CommonName);
             }
 
-            // Join Method Syntax
-            favoriteBirds = birds.Join(colors,
-                bird => bird.Color,
-                color => color,
-                (bird, color) => bird);
+            // Get all unique birds (LEFT OUTER JOIN)
+            var newBirds2 = importedBirds
+                .GroupJoin(birds,
+                ib => ib.CommonName,
+                b => b.CommonName,
+                (ib, b) => new { ImportedBird = ib, Birds = b })
+                .SelectMany(gb => gb.Birds.DefaultIfEmpty(),
+                (gb, b) => new { ImportedBird = gb.ImportedBird, Bird = b });
 
             Console.WriteLine();
-            Console.WriteLine("Method syntax:");
-            foreach (Bird bird in favoriteBirds)
+            Console.WriteLine("List of all birds:");
+            foreach (var bird in newBirds2)
             {
-                Console.WriteLine(bird.Name + " " + bird.Color);
+                if (bird.Bird != null)
+                {
+                    Console.WriteLine(bird.ImportedBird.CommonName + ", " + bird.Bird.CommonName);
+                }
+                else
+                {
+                    Console.WriteLine(bird.ImportedBird.CommonName);
+                }
             }
 
-            // Anonymous function
-            // I couldn't use favoriteBirds, because I already defined as Bird, not this anonymous object
-            var faveBirds = birds.Join(colors,
-                bird => bird.Color,
-                color => color,
-                (bird, color) => new { Color = color, Bird = bird });
+            // Get all unique birds (LEFT OUTER JOIN), couldn't use newBirds2
+            var newBirds3 = importedBirds
+                .GroupJoin(birds,
+                ib => ib.CommonName,
+                b => b.CommonName,
+                (ib, b) => new { ImportedBird = ib, Birds = b })
+                .SelectMany(gb => gb.Birds.DefaultIfEmpty(),
+                (gb, b) => new { ImportedBird = gb.ImportedBird, Bird = b })
+                .Where(nb => nb.Bird == null)
+                .Select(nb => nb.ImportedBird);
 
             Console.WriteLine();
-            Console.WriteLine("Method syntax:");
-            // Can't use Bird bird, since faveBirds is not a Bird object
-            foreach (var bird in faveBirds)
+            Console.WriteLine("List of new birds:");
+            foreach (var bird in newBirds3)
             {
-                Console.WriteLine(bird.Color + ", " + bird.Bird.Name + ", " + bird.Bird.Color + ", " + bird.Bird.Sightings);
+                Console.WriteLine(bird.CommonName);
             }
 
-            // GroupJoin Method Syntax
-            var groupedBirds = colors.GroupJoin(birds,
-                color => color,
-                bird => bird.Color,
-                (color, bird) => new { Color = color, Birds = bird })
-                .Select(grp => grp.Color);
+            // Import into list and get count:
+            var newImportedBirds = newBirds3.ToList();
+            birds.AddRange(newImportedBirds);
+            Console.WriteLine("Total birds: " + birds.Count());
 
-            Console.WriteLine();
-            Console.WriteLine("GroupJoin:");
-            // Here bird is a string:
-            foreach (var bird in groupedBirds)
+            /*  **********  Bird Search Extensions  **********  */
+            var searchParameters = new BirdSearch
             {
-                Console.WriteLine(bird);
-            }
+                Size = "Medium",
+                Country = "United States",
+                Colors = new List<string> { "White", "Brown", "Black" },
+                Page = 0,
+                PageSize = 5
+            };
 
-            // Grouped birds
-            var groupBirds = colors.GroupJoin(birds,
-                color => color,
-                bird => bird.Color,
-                (color, bird) => new { Color = color, Birds = bird });
-
-            // Create other variables to manipulate the list
-            var gb1 = groupBirds.Select(grp => grp.Color);
-            Console.WriteLine();
-            foreach (var bird in gb1)
+            Console.WriteLine("Type any key to begin search.");
+            while(Console.ReadKey().KeyChar != 'q')
             {
-                Console.WriteLine(bird);
+                Console.WriteLine($"Page: {searchParameters.Page}");
+                birds.Search(searchParameters).ToList().ForEach(b =>
+                {
+                    Console.WriteLine($"Common Name: {b.CommonName}");
+                });
+
+                searchParameters.Page++;
             }
 
-            // Group birds variation
-            var gb2 = groupBirds
-                //.Where(grp => grp.Color == "Red")
-                .Where(grp => grp.Color == "Purple")
-                //.Select(grp => grp.Color);
-                .Select(grp => grp.Birds)
-                .ElementAt(0);
+            /*  **********  Which is Faster?  Union vs. Concat  **********  */
+            var listA = Enumerable.Range(0, 100000);
+            var listB = Enumerable.Range(50000, 100000);
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var listC = listA.Union(listB);
+            stopwatch.Stop();
+            var unionTicks = stopwatch.ElapsedTicks;
+
+            stopwatch.Restart();
+            var listD = listA.Concat(listB).Distinct();
+            stopwatch.Stop();
+            var concatTicks = stopwatch.ElapsedTicks;
+
             Console.WriteLine();
-            //Console.WriteLine(gb2.ElementAt(0).Count());
-            Console.WriteLine(gb2.Count());
-            foreach (var bird in gb2)
+            Console.WriteLine();
+            Console.WriteLine("Union vs. Concat");
+            Console.WriteLine(string.Format("Union took {0} ticks.", unionTicks));
+            Console.WriteLine(string.Format("Concat took {0} ticks.", concatTicks));
+
+            if (unionTicks > concatTicks)
             {
-                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
+                Console.WriteLine("Concat is faster by {0}", (unionTicks - concatTicks));
             }
-
-            // GroupMany
-            var gb3 = groupBirds.SelectMany(grp => grp.Birds);
-            Console.WriteLine();
-            foreach (var bird in gb3)
+            else if (concatTicks > unionTicks)
             {
-                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
+                Console.WriteLine("Union is faster by {0}", (concatTicks - unionTicks));
             }
-
-            /*  *****   Aggregates  *****   */
-
-            // Count - I don't need "grp"; it could be just "bird"
-            var birdCount = birds
-                .GroupBy(bird => bird.Color)
-                .Select(grp => new { Color = grp.Key, Count = grp.Count() });
-
-            Console.WriteLine();
-            Console.WriteLine("Aggregates");
-            Console.WriteLine("Count:");
-            foreach (var bird in birdCount)
-            {
-                Console.WriteLine(bird.Color + ": " + bird.Count);
-            }
-
-            // Sum
-            var birdSum = birds.Sum(bird => bird.Sightings);
-            Console.WriteLine();
-            Console.WriteLine("Sum: " + birdSum);
-
-            var birdSightings = birds
-                .GroupBy(bird => bird.Color)
-                .Select(grp => new { Color = grp.Key, Count = grp.Sum(bird => bird.Sightings) });
-
-            Console.WriteLine();
-            Console.WriteLine("Sum of sightings:");
-            foreach (var bird in birdSightings)
-            {
-                Console.WriteLine(bird.Color + ": " + bird.Count);
-            }
-
-            // Average
-            var birdAverage = birds.Average(bird => bird.Sightings);
-            Console.WriteLine();
-            Console.WriteLine("Average: " + birdAverage);
-
-            // Min
-            var birdMin = birds.Min(bird => bird.Sightings);
-            Console.WriteLine();
-            Console.WriteLine("Minimum: " + birdMin);
-
-            // Max
-            var birdMax = birds.Max(bird => bird.Sightings);
-            Console.WriteLine();
-            Console.WriteLine("Maximum: " + birdMax);
-
-            /*  *****   Set Operations  *****   */
-
-            // Distinct
-            var distinctBirds = birds.Select(bird => bird.Color).Distinct();
-            Console.WriteLine();
-            Console.WriteLine("Set Operations");
-            Console.WriteLine("Distinct:");
-            foreach (var bird in distinctBirds)
-            {
-                Console.WriteLine(bird);
-            }
-
-            // Except
-            var exceptColors = colors
-                .Except(birds.Select(bird => bird.Color).Distinct());
-            Console.WriteLine();
-            Console.Write("Except:  ");
-            foreach (var bird in exceptColors)
-            {
-                Console.Write(bird + ", ");
-            }
-
-            // Except
-            var unionColors = colors
-                .Union(birds.Select(bird => bird.Color).Distinct());
-            Console.WriteLine();
-            Console.Write("Union:  ");
-            foreach (var bird in unionColors)
-            {
-                Console.Write(bird + ", ");
-            }
-
-            // Intersect
-            var intColors = colors
-                .Intersect(birds.Select(bird => bird.Color).Distinct());
-            Console.WriteLine();
-            Console.Write("Intersect:  ");
-            foreach (var bird in intColors)
-            {
-                Console.Write(bird + ", ");
-            }
-
-            // Concat
-            var concatColors = colors
-                .Concat(birds.Select(bird => bird.Color));
-            Console.WriteLine();
-            Console.Write("Concat:  ");
-            foreach (var bird in concatColors)
-            {
-                Console.Write(bird + ", ");
-            }
-
-            // Same as union
-            unionColors = colors
-                .Concat(birds.Select(bird => bird.Color)).Distinct();
-            Console.WriteLine();
-            Console.Write("Union using Concat:  ");
-            foreach (var bird in unionColors)
-            {
-                Console.Write(bird + ", ");
-            }
-
-            /*  *****   Generation Operations  *****   */
-
-            Console.WriteLine("\n\n");
-            Console.WriteLine("Generation Operations");
-
-            // Range
-            IEnumerable<int> rangeNum = Enumerable.Range(10, 10);
-            Console.Write("Range:  ");
-            foreach (var rNum in rangeNum)
-            {
-                Console.Write(rNum + ", ");
-            }
-
-            // Repeat
-            var repeatNum = Enumerable.Repeat("LINQ is awesome!", 10);
-            Console.WriteLine();
-            Console.Write("Repeat:  ");
-            foreach (var rNum in repeatNum)
-            {
-                Console.Write(rNum + ", ");
-            }
-
-            var blankBirds = Enumerable.Repeat(new Bird { }, 5);
-            Console.WriteLine();
-            Console.Write("Repeat:  ");
-            foreach (var bird in blankBirds)
-            {
-                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
-            }
-
-            // Empty
-            var emptyBirds = Enumerable.Empty<Bird>();
-            Console.WriteLine();
-            Console.Write("Empty:  ");
-            foreach (var bird in emptyBirds)
-            {
-                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
-            }
-
-            // DefaultIfEmpty
-
-            var emptyNum = Enumerable.Empty<int>();
-            Console.WriteLine();
-            Console.Write("DefaultIfEmpty:  ");
-            Console.Write(emptyNum.Count() + "  |  ");    // Count = 0
-            // Doesn't work:
-            //Console.Write(emptyNum.ElementAt(0) + "  |  ");
-            Console.Write(emptyNum + "  |  ");
-            Console.Write(emptyNum.DefaultIfEmpty() + "  |  ");
-
-            int[] array = emptyNum.ToArray();
-            Console.WriteLine(array.Length);        // 0
-
-            /*  *****   Conversion Operations  *****   */
-
-            Console.WriteLine();
-            Console.WriteLine("Conversion Operations");
-
-            // ToList
-            Console.WriteLine();
-            Console.WriteLine("ToList:  ");
-
-            var tolBirds = birds
-                .Where(bird => bird.Color == "Red")
-                .ToList();
-
-            foreach (var bird in tolBirds)
-            {
-                Console.WriteLine(bird.Name + ", " + bird.Color + ", " + bird.Sightings);
-            }
-
-            // Last example:
-            numbers = new List<int> { 2, 4, 8, 16, 34 };
-            numbers.Where(n => n > 10);
 
             Console.ReadKey();
         }

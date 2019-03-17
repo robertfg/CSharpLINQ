@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSharpLINQ
+namespace CSharpLINQ_OLd
 {
     class Program1
     {
